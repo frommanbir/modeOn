@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ModeOn</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🎯 ModeOn</h1>
+            <div class="status" id="statusIndicator">Not Tracking</div>
+        </header>
+        
+        <div id="setupView" class="view">
+            <div class="setup-container">
+                <div class="input-group">
+                    <label for="focusKeyword">Enter your focus topic:</label>
+                    <input type="text" id="focusKeyword" placeholder="e.g., React, Python, AI..." maxlength="50">
+                    <small>Related words will be automatically detected</small>
+                </div>
+
+                <div id="focusWordsPreview" class="focus-preview"></div>
+                
+                <div class="session-settings">
+                    <h3>Session Configuration</h3>
+                    
+                    <div class="setting-row">
+                        <div class="setting-group">
+                            <label for="workDuration">Focus Duration (min):</label>
+                            <div class="number-input">
+                                <button type="button" class="number-btn" data-target="workDuration" data-change="-5">-</button>
+                                <input type="number" id="workDuration" min="15" max="120" value="45">
+                                <button type="button" class="number-btn" data-target="workDuration" data-change="5">+</button>
+                            </div>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label for="breakDuration">Break Duration (min):</label>
+                            <div class="number-input">
+                                <button type="button" class="number-btn" data-target="breakDuration" data-change="-1">-</button>
+                                <input type="number" id="breakDuration" min="1" max="30" value="5">
+                                <button type="button" class="number-btn" data-target="breakDuration" data-change="1">+</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group full-width">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="enableBreaks" checked>
+                            <span class="toggle-custom"></span>
+                            Enable automatic breaks
+                        </label>
+                    </div>
+                    
+                    <div class="preset-buttons">
+                        <button type="button" class="preset-btn active" data-preset="pomodoro">🍅 Pomodoro (25/5)</button>
+                        <button type="button" class="preset-btn" data-preset="deepwork">🎯 Deep Work (45/15)</button>
+                        <button type="button" class="preset-btn" data-preset="custom">⚙️ Custom</button>
+                    </div>
+                </div>
+                
+                <button id="startBtn" class="btn btn-primary">
+                    <span class="btn-icon">🚀</span>
+                    Start Focus Session
+                </button>
+            </div>
+        </div>
+        
+        <div id="dashboardView" class="view hidden">
+            <div class="session-info">
+                <h3>Focusing on: <span id="currentTopic">Loading...</span></h3>
+                <div class="session-meta">
+                    <span class="session-duration" id="sessionDuration">45m focus • 5m break</span>
+                </div>
+                <button id="stopBtn" class="btn btn-secondary">End Session</button>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="focusTime">0m</div>
+                    <div class="stat-label">Focus Time</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="distractionTime">0m</div>
+                    <div class="stat-label">Distraction Time</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="focusRatio">0%</div>
+                    <div class="stat-label">Focus Ratio</div>
+                </div>
+            </div>
+            
+            <div class="main-chart-container">
+                <div class="progress-ring">
+                    <svg width="140" height="140" viewBox="0 0 140 140">
+                        <circle class="progress-ring-background" cx="70" cy="70" r="64" stroke-width="12"></circle>
+                        <circle class="progress-ring-circle" id="progressCircle" cx="70" cy="70" r="64" stroke-width="12"
+                                stroke-dasharray="402.124" stroke-dashoffset="402.124"></circle>
+                    </svg>
+                    <div class="progress-text">
+                        <div class="progress-value" id="ringValue">0%</div>
+                        <div class="progress-label">Focus Ratio</div>
+                    </div>
+                </div>
+                <div class="chart-legend">
+                    <div class="legend-item">
+                        <div class="legend-color focus-color"></div>
+                        <span>Focus: <span id="legendFocus">0m</span></span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color distraction-color"></div>
+                        <span>Distracted: <span id="legendDistraction">0m</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="break-management">
+                <div class="break-header">
+                    <h3>🕒 Break Timer</h3>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="breakToggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                
+                <div class="break-controls">
+                    <div class="break-input-group">
+                        <label>Focus Duration (min):</label>
+                        <input type="number" id="workDurationDashboard" min="15" max="120" value="45">
+                    </div>
+                    <div class="break-input-group">
+                        <label>Break Duration (min):</label>
+                        <input type="number" id="breakDurationDashboard" min="1" max="30" value="5">
+                    </div>
+                </div>
+
+                <div class="break-status" id="breakStatus">
+                    <div class="break-timer" id="breakTimer">
+                        <div class="timer-display">
+                            <span id="timerText">Next break in: --:--</span>
+                        </div>
+                        <div class="break-actions">
+                            <button id="startBreakBtn" class="btn-break">Start Break Now</button>
+                            <button id="endBreakBtn" class="btn-break btn-skip hidden">End Break</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="activity-indicator">
+                <div class="activity-dot unknown" id="activityDot"></div>
+                <span id="activityText">Currently: Loading</span>
+            </div>
+            
+            <div class="tips">
+                <p>💡 Stay on pages related to your focus topic to build focus time!</p>
+            </div>
+        </div>
+    </div>
+    <script src="popup.js"></script>
+</body>
+</html>
