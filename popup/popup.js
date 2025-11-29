@@ -157,9 +157,24 @@ class PopupManager {
                 this.currentSessionSettings.breakDuration = 15;
                 this.currentSessionSettings.enableBreaks = true;
                 break;
-            case 'custom':
-                // Keep current settings - don't change anything
-                break;
+           
+    case 'custom':
+        // Fetch custom user input values
+        const customWork = parseInt(document.getElementById('customWork').value, 10);
+        const customBreak = parseInt(document.getElementById('customBreak').value, 10);
+        const customBreakToggle = document.getElementById('customBreakToggle').checked;
+
+        // Apply custom values if valid
+        if (!isNaN(customWork) && customWork > 0) {
+            this.currentSessionSettings.workDuration = customWork;
+        }
+
+        if (!isNaN(customBreak) && customBreak >= 0) {
+            this.currentSessionSettings.breakDuration = customBreak;
+        }
+
+        this.currentSessionSettings.enableBreaks = customBreakToggle;
+        break;
         }
 
         this.updateNumberInputs();
@@ -211,33 +226,36 @@ class PopupManager {
         }
     }
 
-    async startSession() {
-        const keyword = document.getElementById('focusKeyword').value.trim();
-        if (!keyword) {
-            alert('Please enter a focus topic');
-            return;
-        }
-
-        try {
-            const response = await this.sendMessage({
-                action: 'startSession',
-                keyword: keyword,
-                sessionSettings: this.currentSessionSettings
-            });
-
-            if (response.success) {
-                this.isTracking = true;
-                this.showDashboard();
-                this.startDashboardUpdates();
-                this.updateBreakSettings();  // Added to automatically start the break timer if breaks are enabled
-            } else {
-                alert('Failed to start session: ' + (response.error || 'Unknown error'));
-            }
-        } catch (error) {
-            console.error('Error starting session:', error);
-            alert('Failed to start session');
-        }
+   async startSession() {
+    const keyword = document.getElementById('focusKeyword').value.trim();
+    if (!keyword) {
+        alert('Please enter a focus topic');
+        return;
     }
+
+    try {
+        const response = await this.sendMessage({
+            action: 'startSession',
+            keyword: keyword,
+            sessionSettings: this.currentSessionSettings
+        });
+
+        if (response.success) {
+            this.isTracking = true;
+            this.showDashboard();
+            this.startDashboardUpdates();
+
+            // ⭐ Option C: Auto-start break cycle when session starts
+            document.getElementById('breakToggle').checked = this.currentSessionSettings.enableBreaks;
+            await this.updateBreakSettings(); 
+        } else {
+            alert('Failed to start session: ' + (response.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error starting session:', error);
+        alert('Failed to start session');
+    }
+}
 
     async stopSession() {
         try {
@@ -252,22 +270,28 @@ class PopupManager {
         }
     }
 
-    async updateBreakSettings() {
-        const settings = {
-            workDuration: parseInt(document.getElementById('workDurationDashboard').value),
-            breakDuration: parseInt(document.getElementById('breakDurationDashboard').value),
-            enabled: document.getElementById('breakToggle').checked
-        };
+async updateBreakSettings() {
+    const settings = {
+        workDuration: parseInt(document.getElementById('workDurationDashboard').value),
+        breakDuration: parseInt(document.getElementById('breakDurationDashboard').value),
+        enabled: document.getElementById('breakToggle').checked
+    };
 
-        try {
-            await this.sendMessage({
-                action: 'updateBreakSettings',
-                settings: settings
-            });
-        } catch (error) {
-            console.error('Error updating break settings:', error);
-        }
+    // Update stored settings too
+    this.currentSessionSettings.workDuration = settings.workDuration;
+    this.currentSessionSettings.breakDuration = settings.breakDuration;
+
+    try {
+        await this.sendMessage({
+            action: 'updateBreakSettings',
+            settings: settings
+        });
+    } catch (error) {
+        console.error('Error updating break settings:', error);
     }
+}
+
+
 
     async startBreakNow() {
         try {
@@ -320,14 +344,23 @@ class PopupManager {
         // Update activity indicator
         this.updateActivityIndicator(data.currentActivity);
 
-        // Update break settings in dashboard
-        if (data.breakStatus) {
-            this.updateBreakTimer(data.breakStatus);
-        }
+if (data.breakStatus) {
+    this.updateBreakTimer(data.breakStatus);
+}
 
-        // Update session duration display
-        const durationText = `${this.currentSessionSettings.workDuration}m focus • ${this.currentSessionSettings.breakDuration}m break`;
-        document.getElementById('sessionDuration').textContent = durationText;
+// ⭐ Keep session duration updated with user's actual input
+// Read current values directly from dashboard inputs
+const workInput = parseInt(document.getElementById('workDurationDashboard').value) || this.currentSessionSettings.workDuration;
+const breakInput = parseInt(document.getElementById('breakDurationDashboard').value) || this.currentSessionSettings.breakDuration;
+
+// Update stored settings so everything stays in sync
+this.currentSessionSettings.workDuration = workInput;
+this.currentSessionSettings.breakDuration = breakInput;
+
+// Update the text display
+const durationText = `${workInput}m focus • ${breakInput}m break`;
+document.getElementById('sessionDuration').textContent = durationText;
+
     }
 
     updateProgressRing(ratio) {
