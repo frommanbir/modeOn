@@ -135,28 +135,36 @@ class PopupManager {
     }
 
     handlePresetSelect(preset) {
-        document.querySelectorAll('.preset-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        event.target.classList.add('active');
-
-        switch(preset) {
-            case 'pomodoro':
-                this.currentSessionSettings.workDuration = 25;
-                this.currentSessionSettings.breakDuration = 5;
-                break;
-            case 'deepwork':
-                this.currentSessionSettings.workDuration = 45;
-                this.currentSessionSettings.breakDuration = 15;
-                break;
-            case 'custom':
-                // Keep current settings
-                break;
-        }
-
-        this.updateNumberInputs();
-        this.updatePresetButtons();
+    // Remove active class from all preset buttons
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Add active class to the clicked button
+    const clickedButton = document.querySelector(`[data-preset="${preset}"]`);
+    if (clickedButton) {
+        clickedButton.classList.add('active');
     }
+
+    switch(preset) {
+        case 'pomodoro':
+            this.currentSessionSettings.workDuration = 25;
+            this.currentSessionSettings.breakDuration = 5;
+            this.currentSessionSettings.enableBreaks = true;
+            break;
+        case 'deepwork':
+            this.currentSessionSettings.workDuration = 45;
+            this.currentSessionSettings.breakDuration = 15;
+            this.currentSessionSettings.enableBreaks = true;
+            break;
+        case 'custom':
+            // Keep current settings - don't change anything
+            break;
+    }
+
+    this.updateNumberInputs();
+    // Don't call updatePresetButtons() here as it would override the active state
+}
 
     updateNumberInputs() {
         document.getElementById('workDuration').value = this.currentSessionSettings.workDuration;
